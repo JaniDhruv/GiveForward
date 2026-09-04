@@ -1,60 +1,36 @@
-// api/db.js
-// Shared Mongoose connection and Schemas for Vercel Serverless Functions
-
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
-}
-
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in serverless environments. This prevents connections growing exponentially
- * during API Route usage.
- */
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
 export async function connectToDatabase() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+  if (!MONGODB_URI) {
+    throw new Error('Please define the MONGODB_URI environment variable');
   }
 
   try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
+    await mongoose.connect(MONGODB_URI, { bufferCommands: false });
+    console.log('✅ Connected to MongoDB');
+  } catch (error) {
+    console.error('❌ MongoDB Connection Error:', error);
+    process.exit(1);
   }
-
-  return cached.conn;
 }
-
-// ==========================================
-// SCHEMAS
-// ==========================================
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
   name: { type: String, required: true },
   initials: { type: String, required: true },
   color: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
+});
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
 
 const entrySchema = new mongoose.Schema({
@@ -85,7 +61,6 @@ const chainSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Avoid OverwriteModelError in serverless environments
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 export const Entry = mongoose.models.Entry || mongoose.model('Entry', entrySchema);
 export const Chain = mongoose.models.Chain || mongoose.model('Chain', chainSchema);
