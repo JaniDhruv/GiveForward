@@ -34,9 +34,10 @@ When you help someone, that person is inspired to help someone else. One act of 
 | **Google Gemini AI** (2.0 Flash) | Natural language parsing & intelligent match ranking |
 | **ElevenLabs** (Flash v2.5) | Voice-based confirmations & accessibility |
 | **D3.js** (d3-force) | Interactive force-directed generosity chain visualization |
-| **Web Speech API** | Voice input for hands-free request creation |
+| **MongoDB Atlas** (Mongoose) | Persistent data storage for users, entries, and chains |
+| **Node.js** (Vercel APIs) | Serverless backend endpoints for data and authentication |
+| **Nodemailer + JWT** | Custom Magic Link passwordless authentication |
 | **Vanilla JS + Vite** | Zero-framework SPA with hash-based routing |
-| **Vercel** | Serverless API routes + hosting |
 
 ---
 

@@ -5,15 +5,20 @@
   "description": "Generosity isn't measured in dollars — it's measured in chains of human connection.",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vercel dev",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.0.0",
+    "cookie": "^2.0.1",
     "d3": "^7.9.0",
-    "@google/genai": "^1.0.0"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.4",
+    "nodemailer": "^10.0.0"
   },
   "devDependencies": {
+    "vercel": "^59.11.7",
     "vite": "^6.3.0"
   }
 }

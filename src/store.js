@@ -1,9 +1,4 @@
-// GiveForward — State Management Store
-// localStorage-backed with pub/sub for reactivity
-
-import { seedUsers, seedEntries, seedChains, seedStats } from './data/seed.js';
-
-const STORAGE_KEY = 'giveforward_store';
+// GiveForward — API-based State Management Store
 
 // Simple pub/sub event system
 const listeners = {};
@@ -23,186 +18,175 @@ export function on(event, fn) {
 }
 
 // State
-let state = null;
+let state = {
+  currentUser: null,
+  entries: [],
+  chains: [],
+  users: [],
+  stats: {
+    totalActs: 0,
+    peopleHelped: 0,
+    chainsStarted: 0,
+    longestChain: 0,
+    hoursGiven: 0 // Mocked stat or could be calculated
+  }
+};
 
-function getDefaultState() {
-  return {
-    users: [...seedUsers],
-    entries: [...seedEntries],
-    chains: JSON.parse(JSON.stringify(seedChains)),
-    stats: { ...seedStats },
-    currentUser: seedUsers.find((u) => u.id === 'u15'), // Dhruv Jani as default user
-  };
-}
-
-function loadState() {
+// Initialize by fetching current user and global data
+export async function initStore() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      state = JSON.parse(saved);
-      // Ensure all keys exist (in case of schema changes)
-      const defaults = getDefaultState();
-      for (const key of Object.keys(defaults)) {
-        if (!(key in state)) {
-          state[key] = defaults[key];
-        }
-      }
+    // 1. Fetch current user session
+    const meRes = await fetch('/api/auth/me');
+    if (meRes.ok) {
+      const data = await meRes.json();
+      state.currentUser = data.user;
     } else {
-      state = getDefaultState();
+      state.currentUser = null;
     }
-  } catch {
-    state = getDefaultState();
+
+    // 2. Fetch chains (which also returns users)
+    const chainsRes = await fetch('/api/chains');
+    if (chainsRes.ok) {
+      const { chains, users } = await chainsRes.json();
+      state.chains = chains;
+      state.users = users; // Map of users involved in chains
+      calculateGlobalStats();
+    }
+
+    // 3. Fetch recent entries
+    const entriesRes = await fetch('/api/entries');
+    if (entriesRes.ok) {
+      state.entries = await entriesRes.json();
+    }
+
+    emit('init', state);
+    return state;
+  } catch (error) {
+    console.error('Failed to initialize store from APIs', error);
   }
 }
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('Failed to save state:', e);
-  }
+export async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  state.currentUser = null;
+  emit('auth:change', null);
+  window.location.hash = '#/';
 }
 
-// Initialize
-export function initStore() {
-  loadState();
-  emit('init', state);
-  return state;
-}
-
-// Reset to seed data
-export function resetStore() {
-  state = getDefaultState();
-  saveState();
-  emit('reset', state);
-  return state;
+function calculateGlobalStats() {
+  state.stats.totalActs = state.chains.reduce((acc, chain) => acc + chain.acts.length, 0);
+  
+  const uniqueUsers = new Set();
+  state.chains.forEach(c => {
+    c.acts.forEach(act => {
+      uniqueUsers.add(act.from);
+      uniqueUsers.add(act.to);
+    });
+  });
+  
+  state.stats.peopleHelped = uniqueUsers.size;
+  state.stats.chainsStarted = state.chains.length;
+  state.stats.longestChain = state.chains.length > 0 ? Math.max(...state.chains.map(c => c.acts.length)) : 0;
+  state.stats.hoursGiven = state.stats.totalActs * 2; // Rough estimate for UI flair
 }
 
 // ========== GETTERS ==========
 
 export function getState() {
-  if (!state) loadState();
   return state;
 }
 
 export function getUsers() {
-  return getState().users;
+  return state.users;
 }
 
 export function getUserById(id) {
-  return getState().users.find((u) => u.id === id);
+  // Try to find in state.users, or if it's the current user
+  if (state.currentUser && state.currentUser._id === id) return state.currentUser;
+  return state.users.find((u) => u._id === id);
 }
 
 export function getCurrentUser() {
-  return getState().currentUser;
+  return state.currentUser;
 }
 
 export function getEntries(filter = {}) {
-  let entries = getState().entries;
+  let entries = state.entries;
 
-  if (filter.type) {
-    entries = entries.filter((e) => e.type === filter.type);
-  }
-  if (filter.category) {
-    entries = entries.filter((e) => e.category === filter.category);
-  }
-  if (filter.status) {
-    entries = entries.filter((e) => e.status === filter.status);
-  }
-  if (filter.userId) {
-    entries = entries.filter((e) => e.userId === filter.userId);
-  }
+  if (filter.type) entries = entries.filter((e) => e.type === filter.type);
+  if (filter.category && filter.category !== 'all') entries = entries.filter((e) => e.category === filter.category);
+  if (filter.status) entries = entries.filter((e) => e.status === filter.status);
+  
   if (filter.search) {
     const q = filter.search.toLowerCase();
     entries = entries.filter(
       (e) =>
         e.title.toLowerCase().includes(q) ||
         e.description.toLowerCase().includes(q) ||
-        e.tags.some((t) => t.toLowerCase().includes(q))
+        (e.tags && e.tags.some((t) => t.toLowerCase().includes(q)))
     );
   }
 
-  // Sort by newest first
-  return entries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-export function getEntryById(id) {
-  return getState().entries.find((e) => e.id === id);
+  return entries;
 }
 
 export function getChains() {
-  return getState().chains;
+  return state.chains;
 }
 
 export function getStats() {
-  return getState().stats;
+  return state.stats;
 }
 
-// ========== MUTATIONS ==========
+// ========== MUTATIONS (API Calls) ==========
 
-export function addEntry(entry) {
-  const newEntry = {
-    ...entry,
-    id: `e${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    status: 'open',
-  };
-  state.entries.unshift(newEntry);
-  saveState();
-  emit('entry:added', newEntry);
-  return newEntry;
-}
-
-export function updateEntry(id, updates) {
-  const idx = state.entries.findIndex((e) => e.id === id);
-  if (idx === -1) return null;
-  state.entries[idx] = { ...state.entries[idx], ...updates };
-  saveState();
-  emit('entry:updated', state.entries[idx]);
-  return state.entries[idx];
-}
-
-export function completeMatch(fromUserId, toUserId, action, category) {
-  // Add to the most relevant chain, or create a new one
-  const act = {
-    from: fromUserId,
-    to: toUserId,
-    action,
-    category,
-    completedAt: new Date().toISOString(),
-  };
-
-  // Try to extend an existing chain
-  let added = false;
-  for (const chain of state.chains) {
-    const lastAct = chain.acts[chain.acts.length - 1];
-    if (lastAct.to === fromUserId || lastAct.from === fromUserId) {
-      chain.acts.push(act);
-      added = true;
-      break;
-    }
-  }
-
-  // If no matching chain, create a new one
-  if (!added) {
-    state.chains.push({
-      id: `chain${Date.now()}`,
-      name: 'New Generosity Chain',
-      acts: [act],
+export async function addEntry(entryData) {
+  try {
+    const res = await fetch('/api/entries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entryData)
     });
+    
+    if (!res.ok) throw new Error('Failed to create entry');
+    
+    const newEntry = await res.json();
+    state.entries.unshift(newEntry);
+    emit('entry:added', newEntry);
+    return newEntry;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
+}
 
-  // Update stats
-  state.stats.totalActs++;
-  state.stats.peopleHelped = new Set(
-    state.chains.flatMap((c) => c.acts.flatMap((a) => [a.from, a.to]))
-  ).size;
-  state.stats.chainsStarted = state.chains.length;
-  state.stats.longestChain = Math.max(...state.chains.map((c) => c.acts.length));
-
-  saveState();
-  emit('chain:updated', { act, chains: state.chains });
-  return act;
+export async function completeMatch(fromUserId, toUserId, action, category) {
+  try {
+    const res = await fetch('/api/chains', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromUserId, toUserId, action, category })
+    });
+    
+    if (!res.ok) throw new Error('Failed to log act');
+    
+    const { act, chain } = await res.json();
+    
+    // Update local chains state
+    const existingChainIdx = state.chains.findIndex(c => c._id === chain._id);
+    if (existingChainIdx > -1) {
+      state.chains[existingChainIdx] = chain;
+    } else {
+      state.chains.push(chain);
+    }
+    
+    calculateGlobalStats();
+    emit('chain:updated', { act, chains: state.chains });
+    return act;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 // Build the network graph data from chains
@@ -210,40 +194,42 @@ export function getNetworkData() {
   const nodesMap = new Map();
   const links = [];
 
-  for (const chain of getState().chains) {
+  for (const chain of state.chains) {
     for (const act of chain.acts) {
-      // Add nodes
-      if (!nodesMap.has(act.from)) {
-        const user = getUserById(act.from);
-        nodesMap.set(act.from, {
-          id: act.from,
-          name: user?.name || 'Unknown',
-          initials: user?.initials || '??',
+      // Handle missing/unpopulated users safely
+      const fromId = typeof act.from === 'object' ? act.from._id : act.from;
+      const toId = typeof act.to === 'object' ? act.to._id : act.to;
+
+      if (!nodesMap.has(fromId)) {
+        const user = getUserById(fromId);
+        nodesMap.set(fromId, {
+          id: fromId,
+          name: user?.name || 'User',
+          initials: user?.initials || 'U',
           color: user?.color || '#6C5CE7',
           actCount: 0,
         });
       }
-      if (!nodesMap.has(act.to)) {
-        const user = getUserById(act.to);
-        nodesMap.set(act.to, {
-          id: act.to,
-          name: user?.name || 'Unknown',
-          initials: user?.initials || '??',
+      if (!nodesMap.has(toId)) {
+        const user = getUserById(toId);
+        nodesMap.set(toId, {
+          id: toId,
+          name: user?.name || 'User',
+          initials: user?.initials || 'U',
           color: user?.color || '#6C5CE7',
           actCount: 0,
         });
       }
 
-      nodesMap.get(act.from).actCount++;
-      nodesMap.get(act.to).actCount++;
+      nodesMap.get(fromId).actCount++;
+      nodesMap.get(toId).actCount++;
 
-      // Add link
       links.push({
-        source: act.from,
-        target: act.to,
+        source: fromId,
+        target: toId,
         action: act.action,
         category: act.category,
-        chainId: chain.id,
+        chainId: chain._id,
       });
     }
   }
@@ -254,29 +240,42 @@ export function getNetworkData() {
   };
 }
 
-// Get chains involving a specific user
 export function getUserChains(userId) {
-  return getState().chains.filter((chain) =>
-    chain.acts.some((act) => act.from === userId || act.to === userId)
+  if (!userId) return [];
+  return state.chains.filter((chain) =>
+    chain.acts.some((act) => {
+      const fromId = typeof act.from === 'object' ? act.from._id : act.from;
+      const toId = typeof act.to === 'object' ? act.to._id : act.to;
+      return fromId === userId || toId === userId;
+    })
   );
 }
 
-// Get user-specific stats
 export function getUserStats(userId) {
+  if (!userId) return { actsCompleted: 0, actsReceived: 0, peopleReached: 0, chainsStarted: 0, longestChain: 0 };
+  
   const chains = getUserChains(userId);
   const acts = chains.flatMap((c) => c.acts);
-  const givenActs = acts.filter((a) => a.from === userId);
-  const receivedActs = acts.filter((a) => a.to === userId);
+  
+  const givenActs = acts.filter((act) => {
+    const fromId = typeof act.from === 'object' ? act.from._id : act.from;
+    return fromId === userId;
+  });
+  
+  const receivedActs = acts.filter((act) => {
+    const toId = typeof act.to === 'object' ? act.to._id : act.to;
+    return toId === userId;
+  });
 
-  // Calculate chain reach — how many unique people are downstream
   const reached = new Set();
   for (const chain of chains) {
     let foundUser = false;
     for (const act of chain.acts) {
-      if (act.from === userId) foundUser = true;
-      if (foundUser) {
-        reached.add(act.to);
-      }
+      const fromId = typeof act.from === 'object' ? act.from._id : act.from;
+      const toId = typeof act.to === 'object' ? act.to._id : act.to;
+      
+      if (fromId === userId) foundUser = true;
+      if (foundUser) reached.add(toId);
     }
   }
 
@@ -284,9 +283,10 @@ export function getUserStats(userId) {
     actsCompleted: givenActs.length,
     actsReceived: receivedActs.length,
     peopleReached: reached.size,
-    chainsStarted: chains.filter((c) => c.acts[0]?.from === userId).length,
-    longestChain: chains.length > 0
-      ? Math.max(...chains.map((c) => c.acts.length))
-      : 0,
+    chainsStarted: chains.filter((c) => {
+      const firstActFrom = typeof c.acts[0]?.from === 'object' ? c.acts[0].from._id : c.acts[0]?.from;
+      return firstActFrom === userId;
+    }).length,
+    longestChain: chains.length > 0 ? Math.max(...chains.map((c) => c.acts.length)) : 0,
   };
 }
