@@ -3,6 +3,7 @@
 import { initStore } from './store.js';
 import { initRouter, registerRoute } from './router.js';
 import { renderNavbar } from './components/navbar.js';
+import { mountParticles } from './components/particles.js';
 import { renderHome } from './pages/home.js';
 import { renderExplore } from './pages/explore.js';
 import { renderCreate } from './pages/create.js';
@@ -12,6 +13,9 @@ import { renderAbout } from './pages/about.js';
 function init() {
   // Initialize state
   initStore();
+
+  // Mount particle background
+  mountParticles();
 
   // Render navbar
   renderNavbar(document.getElementById('navbar'));
