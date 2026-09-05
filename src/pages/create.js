@@ -27,14 +27,14 @@ export function renderCreate(container) {
 
         <!-- Type Toggle -->
         <div class="create-toggle animate-fade-in-up stagger-2">
-          <div class="toggle-group" id="type-toggle">
-            <button class="toggle-option active" data-type="offer" id="toggle-offer">
-              💚 I Can Help
-            </button>
-            <button class="toggle-option" data-type="need" id="toggle-need">
-              ❤️ I Need Help
-            </button>
-          </div>
+            <div class="toggle-group" style="margin-bottom:var(--space-8);" id="type-toggle">
+              <button class="toggle-option" data-type="offer" id="toggle-offer">
+                <i data-lucide="hand-heart" style="width:16px;height:16px;vertical-align:middle;margin-right:8px;"></i> I Can Help
+              </button>
+              <button class="toggle-option active" data-type="need" id="toggle-need">
+                <i data-lucide="heart" style="width:16px;height:16px;vertical-align:middle;margin-right:8px;"></i> I Need Help
+              </button>
+            </div>
         </div>
 
         <!-- Form -->
@@ -68,16 +68,17 @@ export function renderCreate(container) {
               <div class="input-group" style="flex:1;">
                 <label class="create-label">Category</label>
                 <select class="input" id="field-category">
-                  <option value="education">📚 Education</option>
-                  <option value="food">🍱 Food</option>
-                  <option value="tech">💻 Tech</option>
-                  <option value="time">🕐 Time</option>
-                  <option value="items">📦 Items</option>
-                  <option value="skills">🎯 Skills</option>
-                  <option value="health">🩺 Health</option>
-                  <option value="transport">🚗 Transport</option>
-                  <option value="housing">🏠 Housing</option>
-                  <option value="other">✨ Other</option>
+                  <option value="">Select Category...</option>
+                  <option value="education">Education</option>
+                  <option value="food">Food</option>
+                  <option value="tech">Tech</option>
+                  <option value="time">Time</option>
+                  <option value="items">Items</option>
+                  <option value="skills">Skills</option>
+                  <option value="health">Health</option>
+                  <option value="transport">Transport</option>
+                  <option value="housing">Housing</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
               <div class="input-group" style="flex:1;">
@@ -112,9 +113,9 @@ export function renderCreate(container) {
 
           <!-- ElevenLabs Confirmation -->
           <div class="create-confirmation" id="confirmation" style="display:none;">
-            <div class="card" style="text-align:center;padding:var(--space-8);">
-              <div style="font-size:3rem;margin-bottom:var(--space-4);">🎉</div>
-              <h2 style="margin-bottom:var(--space-2);">Posted Successfully!</h2>
+            <div class="success-screen animate-fade-in-up" id="success-screen" style="text-align:center;padding:var(--space-12) 0;">
+              <div style="margin-bottom:var(--space-4);"><i data-lucide="check-circle" style="width:64px;height:64px;color:var(--success);"></i></div>
+              <h2 style="font-size:var(--text-3xl);margin-bottom:var(--space-2);">Action Posted!</h2>
               <p style="color:var(--text-muted);margin-bottom:var(--space-6);" id="confirmation-text"></p>
               <div class="flex gap-4 justify-center">
                 <button class="btn btn-primary" id="view-explore-btn">View in Explore</button>

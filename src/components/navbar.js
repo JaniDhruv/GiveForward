@@ -21,10 +21,10 @@ export function renderNavbar(container) {
 
           <!-- Desktop Links -->
           <div class="navbar-links hidden-mobile">
-            <a href="#/" class="nav-link ${currentPath === '/' ? 'active' : ''}">Home</a>
-            <a href="#/explore" class="nav-link ${currentPath === '/explore' ? 'active' : ''}">Explore</a>
-            <a href="#/impact" class="nav-link ${currentPath === '/impact' ? 'active' : ''}">Impact</a>
-            <a href="#/about" class="nav-link ${currentPath === '/about' ? 'active' : ''}">About</a>
+            <a href="#/" class="navbar-link ${currentPath === '/' ? 'active' : ''}">Home</a>
+            <a href="#/explore" class="navbar-link ${currentPath === '/explore' ? 'active' : ''}">Explore</a>
+            <a href="#/impact" class="navbar-link ${currentPath === '/impact' ? 'active' : ''}">Impact</a>
+            <a href="#/about" class="navbar-link ${currentPath === '/about' ? 'active' : ''}">About</a>
           </div>
 
           <!-- Auth & Actions -->
@@ -59,10 +59,10 @@ export function renderNavbar(container) {
         
         <!-- Mobile Menu -->
         <div class="navbar-mobile-menu" id="mobile-menu" style="display:none;">
-           <a href="#/" class="nav-link ${currentPath === '/' ? 'active' : ''}">Home</a>
-           <a href="#/explore" class="nav-link ${currentPath === '/explore' ? 'active' : ''}">Explore</a>
-           <a href="#/impact" class="nav-link ${currentPath === '/impact' ? 'active' : ''}">Impact</a>
-           <a href="#/about" class="nav-link ${currentPath === '/about' ? 'active' : ''}">About</a>
+           <a href="#/" class="navbar-link ${currentPath === '/' ? 'active' : ''}">Home</a>
+           <a href="#/explore" class="navbar-link ${currentPath === '/explore' ? 'active' : ''}">Explore</a>
+           <a href="#/impact" class="navbar-link ${currentPath === '/impact' ? 'active' : ''}">Impact</a>
+           <a href="#/about" class="navbar-link ${currentPath === '/about' ? 'active' : ''}">About</a>
            
            <hr style="border-color:var(--border-subtle); margin:var(--space-4) 0;" />
            

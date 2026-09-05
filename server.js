@@ -132,7 +132,7 @@ app.get('/api/entries', async (req, res) => {
 
     const entries = await Entry.find(filter)
       .sort({ createdAt: -1 })
-      .populate('userId', 'name initials color')
+      .populate('userId', 'name initials color email')
       .lean();
     res.json(entries);
   } catch (err) {
@@ -165,7 +165,7 @@ app.get('/api/chains', async (req, res) => {
       userIds.add(act.to.toString());
     }));
     
-    const users = await User.find({ _id: { $in: Array.from(userIds) } }).select('name initials color').lean();
+    const users = await User.find({ _id: { $in: Array.from(userIds) } }).select('name initials color email').lean();
     res.json({ chains, users });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -210,7 +210,7 @@ app.post('/api/seed', async (req, res) => {
     const idMap = new Map();
 
     const usersToInsert = await Promise.all(seedUsers.map(async u => ({
-      email: `${u.id}@example.com`,
+      email: u.email,
       password: await bcrypt.hash('password123', 10),
       name: u.name,
       initials: u.initials,
@@ -238,6 +238,105 @@ app.post('/api/seed', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to seed' });
+  }
+});
+
+// ==========================================
+// AI & VOICE ROUTES
+// ==========================================
+
+import { GoogleGenAI } from '@google/genai';
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+app.post('/api/parse', async (req, res) => {
+  const { text } = req.body;
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    return res.status(400).json({ error: 'Missing or empty "text" field' });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
+  }
+
+  const SYSTEM_PROMPT = `You are a structured data parser for GiveForward. Given a natural language description, extract structured data.
+Return ONLY valid JSON with this exact shape:
+{
+  "type": "need" | "offer",
+  "title": "short 5-8 word summary",
+  "description": "cleaned up version of their message (1-2 sentences)",
+  "category": one of ["education", "food", "tech", "time", "items", "skills", "health", "transport", "housing", "other"],
+  "tags": ["tag1", "tag2", "tag3"] (2-4 relevant tags),
+  "availability": "when they're available (if mentioned, else null)",
+  "location": "location if mentioned, else null",
+  "estimatedTime": "estimated time commitment if applicable, else null"
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: `${SYSTEM_PROMPT}\n\nInput: "${text.trim()}"`,
+    });
+    const raw = response.text.trim();
+    const jsonStr = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+    res.status(200).json({ success: true, data: JSON.parse(jsonStr) });
+  } catch (error) {
+    console.error('Gemini parse error:', error);
+    res.status(500).json({ error: 'Failed to parse text' });
+  }
+});
+
+app.post('/api/match', async (req, res) => {
+  const { request, offers } = req.body;
+  if (!request || !offers || !Array.isArray(offers)) {
+    return res.status(400).json({ error: 'Missing request or offers' });
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
+  }
+
+  const SYSTEM_PROMPT = `You are a matching engine for GiveForward. Given a REQUEST and OFFERS, rank matches.
+Return ONLY valid JSON:
+{ "matches": [ { "offerId": "id", "score": 0.0-1.0, "reason": "reason" } ] }`;
+
+  try {
+    const prompt = `${SYSTEM_PROMPT}\n\nREQUEST:\n${JSON.stringify(request, null, 2)}\n\nOFFERS:\n${JSON.stringify(offers, null, 2)}`;
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+    });
+    const raw = response.text.trim();
+    const jsonStr = raw.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+    res.status(200).json({ success: true, data: JSON.parse(jsonStr) });
+  } catch (error) {
+    console.error('Gemini match error:', error);
+    res.status(500).json({ error: 'Failed to find matches' });
+  }
+});
+
+app.post('/api/speak', async (req, res) => {
+  const { text, voiceId } = req.body;
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    return res.status(400).json({ error: 'Missing text field' });
+  }
+  if (!process.env.ELEVENLABS_API_KEY) {
+    return res.status(500).json({ error: 'ELEVENLABS_API_KEY not configured' });
+  }
+
+  const selectedVoice = voiceId || '21m00Tcm4TlvDq8ikWAM';
+  try {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoice}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'xi-api-key': process.env.ELEVENLABS_API_KEY },
+      body: JSON.stringify({ text: text.trim(), model_id: 'eleven_flash_v2_5' })
+    });
+
+    if (!response.ok) return res.status(response.status).json({ error: 'ElevenLabs API error' });
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    const arrayBuffer = await response.arrayBuffer();
+    res.status(200).send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error('ElevenLabs speak error:', error);
+    res.status(500).json({ error: 'Failed to generate speech' });
   }
 });
 

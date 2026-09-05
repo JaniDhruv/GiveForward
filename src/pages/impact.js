@@ -10,8 +10,8 @@ let graph = null;
 
 export function renderImpact(container) {
   const user = getCurrentUser();
-  const userStats = getUserStats(user.id);
-  const userChains = getUserChains(user.id);
+  const userStats = getUserStats(user._id);
+  const userChains = getUserChains(user._id);
   const globalStats = getStats();
 
   container.innerHTML = `
@@ -19,7 +19,7 @@ export function renderImpact(container) {
       <div class="container" style="padding-top:var(--space-12);padding-bottom:var(--space-16);">
         <!-- Header -->
         <div class="section-header animate-fade-in-up" style="text-align:center;">
-          <div class="section-label" style="justify-content:center;">📊 Your Impact</div>
+          <div class="section-label" style="justify-content:center;"><i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i> Your Impact</div>
           <h1 class="section-title">Your Generosity Ripple</h1>
           <p class="section-subtitle" style="margin:0 auto;">
             See how your acts of kindness have rippled through the community.
@@ -34,8 +34,8 @@ export function renderImpact(container) {
               <h2 class="impact-profile-name">${user.name}</h2>
               <p class="impact-profile-tagline">Your generosity has reached <strong style="color:var(--primary-light);">${userStats.peopleReached} people</strong></p>
             </div>
-            <div class="impact-profile-badge animate-pulse-glow">
-              <span style="font-size:1.5rem;">🌱</span>
+            <div class="impact-profile-badge animate-pulse-glow" style="display:flex;align-items:center;gap:12px;">
+              <i data-lucide="leaf" style="width:32px;height:32px;color:var(--primary);"></i>
               <div>
                 <div style="font-size:var(--text-xs);color:var(--text-muted);">Chain Starter</div>
                 <div style="font-size:var(--text-sm);font-weight:var(--font-bold);color:var(--success);">${userStats.chainsStarted} chain${userStats.chainsStarted !== 1 ? 's' : ''}</div>
@@ -50,7 +50,7 @@ export function renderImpact(container) {
         <!-- Personal Network Graph -->
         <div class="impact-graph-section animate-fade-in-up stagger-4">
           <div class="section-header" style="text-align:center;">
-            <div class="section-label" style="justify-content:center;">🔗 Your Network</div>
+            <div class="section-label" style="justify-content:center;"><i data-lucide="git-merge" style="width:16px;height:16px;"></i> Your Network</div>
             <h2 class="section-title" style="font-size:var(--text-2xl);">Your Generosity Chain</h2>
           </div>
           <div class="impact-graph card" id="impact-graph"></div>
@@ -59,7 +59,7 @@ export function renderImpact(container) {
         <!-- Chain Stories -->
         <div class="impact-chains animate-fade-in-up stagger-5">
           <div class="section-header" style="text-align:center;">
-            <div class="section-label" style="justify-content:center;">🌊 Your Chains</div>
+            <div class="section-label" style="justify-content:center;"><i data-lucide="git-commit" style="width:16px;height:16px;"></i> Your Chains</div>
             <h2 class="section-title" style="font-size:var(--text-2xl);">Chains You're Part Of</h2>
           </div>
           <div class="impact-chain-list" id="chain-list"></div>
@@ -68,7 +68,7 @@ export function renderImpact(container) {
         <!-- Global Impact -->
         <div class="impact-global animate-fade-in-up stagger-6">
           <div class="section-header" style="text-align:center;">
-            <div class="section-label" style="justify-content:center;">🌍 Community Impact</div>
+            <div class="section-label" style="justify-content:center;"><i data-lucide="globe" style="width:16px;height:16px;"></i> Community Impact</div>
             <h2 class="section-title" style="font-size:var(--text-2xl);">The Bigger Picture</h2>
           </div>
           <div class="impact-global-stats">
@@ -110,10 +110,10 @@ export function renderImpact(container) {
   }
 
   // Render personal graph
-  initPersonalGraph(user.id);
+  initPersonalGraph(user._id);
 
   // Render chain stories
-  renderUserChains(userChains, user.id);
+  renderUserChains(userChains, user._id);
 
   // CTA
   document.getElementById('impact-cta')?.addEventListener('click', () => navigate('/create'));

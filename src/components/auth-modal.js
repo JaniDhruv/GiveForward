@@ -13,7 +13,9 @@ export function createAuthModal(onSuccess) {
       <button class="auth-modal-close" aria-label="Close">✕</button>
       
       <div class="auth-modal-header">
-        <div class="auth-modal-icon">🌱</div>
+        <div class="auth-modal-icon" style="color:var(--primary); margin-bottom:var(--space-4);">
+          <i data-lucide="leaf" style="width:48px;height:48px;"></i>
+        </div>
         <h2 id="auth-title">Sign In</h2>
         <p style="color:var(--text-muted);font-size:var(--text-sm);margin-top:var(--space-2);" id="auth-subtitle">
           Welcome back to GiveForward.

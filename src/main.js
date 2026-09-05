@@ -15,8 +15,8 @@ async function init() {
   // Initialize state (fetches user auth and chains)
   await initStore();
 
-  // Mount particle background
-  mountParticles();
+  // Mount particle background (Disabled for Light Theme)
+  // mountParticles();
 
   // Render navbar
   renderNavbar(document.getElementById('navbar'));

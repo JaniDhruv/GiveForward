@@ -75,33 +75,30 @@ export function renderHome(container) {
       <section class="how-it-works page-section" id="how-it-works">
         <div class="container">
           <div class="section-header" style="text-align:center;">
-            <div class="section-label" style="justify-content:center;">🔗 How It Works</div>
+            <div class="section-label" style="justify-content:center;"><i data-lucide="help-circle" style="width:16px;height:16px;"></i> How It Works</div>
             <h2 class="section-title">Generosity That Propagates</h2>
             <p class="section-subtitle" style="margin:0 auto;">
               Every act of kindness creates a chain. Your help inspires the person you helped to help someone else.
             </p>
           </div>
 
-          <div class="steps-grid">
-            <div class="step-card card animate-fade-in-up stagger-1">
-              <div class="step-number">01</div>
-              <div class="step-icon">🤝</div>
-              <h3 class="step-title">Share What You Need or Can Give</h3>
-              <p class="step-desc">Tell us in your own words. Our AI understands natural language — no forms, no checkboxes.</p>
+          <div class="steps-grid grid grid-3">
+            <div class="step-card card animate-fade-in-up stagger-1" style="text-align:center;">
+              <div class="step-icon" style="margin-bottom:var(--space-4);"><i data-lucide="handshake" style="width:32px;height:32px;color:var(--primary);"></i></div>
+              <h3 class="step-title">1. Share Need or Offer</h3>
+              <p class="step-desc">Tell us in your own words. No forms, no checkboxes.</p>
             </div>
-            <div class="step-arrow">→</div>
-            <div class="step-card card animate-fade-in-up stagger-3">
-              <div class="step-number">02</div>
-              <div class="step-icon">✨</div>
-              <h3 class="step-title">AI Finds Your Match</h3>
-              <p class="step-desc">Google Gemini analyzes needs and offers to find meaningful connections — not just keyword matches.</p>
+            
+            <div class="step-card card animate-fade-in-up stagger-3" style="text-align:center;">
+              <div class="step-icon" style="margin-bottom:var(--space-4);"><i data-lucide="sparkles" style="width:32px;height:32px;color:var(--accent);"></i></div>
+              <h3 class="step-title">2. Find Your Match</h3>
+              <p class="step-desc">We connect needs and offers to find meaningful connections.</p>
             </div>
-            <div class="step-arrow">→</div>
-            <div class="step-card card animate-fade-in-up stagger-5">
-              <div class="step-number">03</div>
-              <div class="step-icon">🌱</div>
-              <h3 class="step-title">Watch Your Chain Grow</h3>
-              <p class="step-desc">When you help someone, they're inspired to help another. Your single act ripples through the community.</p>
+            
+            <div class="step-card card animate-fade-in-up stagger-5" style="text-align:center;">
+              <div class="step-icon" style="margin-bottom:var(--space-4);"><i data-lucide="leaf" style="width:32px;height:32px;color:var(--success);"></i></div>
+              <h3 class="step-title">3. Watch It Grow</h3>
+              <p class="step-desc">When you help someone, they're inspired to help another. Your single act ripples.</p>
             </div>
           </div>
         </div>
@@ -111,7 +108,7 @@ export function renderHome(container) {
       <section class="chain-stories page-section" id="chain-stories">
         <div class="container">
           <div class="section-header" style="text-align:center;">
-            <div class="section-label" style="justify-content:center;">🌊 Live Chains</div>
+            <div class="section-label" style="justify-content:center;"><i data-lucide="activity" style="width:16px;height:16px;"></i> Live Chains</div>
             <h2 class="section-title">Generosity In Action</h2>
             <p class="section-subtitle" style="margin:0 auto;">
               Real chains of kindness rippling through our community right now.

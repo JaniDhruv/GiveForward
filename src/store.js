@@ -101,6 +101,9 @@ export function getUsers() {
 }
 
 export function getUserById(id) {
+  // If id is a fully populated user object, just return it
+  if (id && typeof id === 'object' && id._id) return id;
+  
   // Try to find in state.users, or if it's the current user
   if (state.currentUser && state.currentUser._id === id) return state.currentUser;
   return state.users.find((u) => u._id === id);

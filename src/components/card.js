@@ -4,16 +4,16 @@
 import { getUserById } from '../store.js';
 
 const CATEGORY_ICONS = {
-  education: '📚',
-  food: '🍱',
-  tech: '💻',
-  time: '🕐',
-  items: '📦',
-  skills: '🎯',
-  health: '🩺',
-  transport: '🚗',
-  housing: '🏠',
-  other: '✨',
+  education: '<i data-lucide="book-open" style="width:20px;height:20px;"></i>',
+  food: '<i data-lucide="coffee" style="width:20px;height:20px;"></i>',
+  tech: '<i data-lucide="laptop" style="width:20px;height:20px;"></i>',
+  time: '<i data-lucide="clock" style="width:20px;height:20px;"></i>',
+  items: '<i data-lucide="package" style="width:20px;height:20px;"></i>',
+  skills: '<i data-lucide="award" style="width:20px;height:20px;"></i>',
+  health: '<i data-lucide="heart-pulse" style="width:20px;height:20px;"></i>',
+  transport: '<i data-lucide="car" style="width:20px;height:20px;"></i>',
+  housing: '<i data-lucide="home" style="width:20px;height:20px;"></i>',
+  other: '<i data-lucide="star" style="width:20px;height:20px;"></i>',
 };
 
 export function createCard(entry, options = {}) {
@@ -22,7 +22,7 @@ export function createCard(entry, options = {}) {
 
   const card = document.createElement('div');
   card.className = `entry-card card card-glow animate-fade-in-up ${compact ? 'entry-card-compact' : ''}`;
-  card.dataset.id = entry.id;
+  card.dataset.id = entry._id || entry.id;
   card.dataset.type = entry.type;
 
   const typeLabel = entry.type === 'need' ? 'Needs Help' : 'Can Help';
@@ -43,7 +43,7 @@ export function createCard(entry, options = {}) {
       <span class="tag ${typeClass}">${typeLabel}</span>
     </div>
 
-    <h3 class="entry-card-title">${icon} ${entry.title}</h3>
+    <h3 class="entry-card-title flex items-center gap-2">${icon} ${entry.title}</h3>
     <p class="entry-card-desc">${entry.description}</p>
 
     <div class="entry-card-tags">
@@ -58,7 +58,7 @@ export function createCard(entry, options = {}) {
 
     ${showActions ? `
       <div class="entry-card-actions">
-        <button class="btn btn-${entry.type === 'need' ? 'accent' : 'success'} btn-sm entry-connect-btn" data-id="${entry.id}">
+        <button class="btn btn-${entry.type === 'need' ? 'accent' : 'success'} btn-sm entry-connect-btn" data-id="${entry._id || entry.id}">
           <i data-lucide="link" style="width:14px;height:14px;"></i>
           Connect
         </button>
